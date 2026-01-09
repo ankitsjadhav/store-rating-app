@@ -50,4 +50,21 @@ const validateLoginInput = withValidationErrors([
   body("password").notEmpty().withMessage("Password is required"),
 ]);
 
-module.exports = { validateRegisterInput, validateLoginInput };
+const validateStoreInput = withValidationErrors([
+  body("name").notEmpty().withMessage("Store name is required"),
+  body("email").notEmpty().withMessage("Email is required").isEmail(),
+  body("address").notEmpty().withMessage("Address is required"),
+]);
+
+const validateRatingInput = withValidationErrors([
+  body("value")
+    .isInt({ min: 1, max: 5 })
+    .withMessage("Rating must be between 1 and 5"),
+]);
+
+module.exports = {
+  validateRegisterInput,
+  validateLoginInput,
+  validateStoreInput,
+  validateRatingInput,
+};

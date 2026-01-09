@@ -1,3 +1,4 @@
+const userRouter = require("./routes/userRoutes");
 const authRouter = require("./routes/authRoutes");
 const express = require("express");
 const cors = require("cors");
@@ -15,6 +16,7 @@ app.use(express.json());
 connectDB();
 
 app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
