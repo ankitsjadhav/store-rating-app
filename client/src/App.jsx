@@ -1,8 +1,39 @@
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  Home,
+  Register,
+  Login,
+  AdminDashboard,
+  StoreDashboard,
+  Error,
+} from "../pages";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Home />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/admin",
+    element: <AdminDashboard />,
+  },
+  {
+    path: "/store-owner",
+    element: <StoreDashboard />,
+  },
+]);
+
 const App = () => {
-  return (
-    <h1 className="text-3xl font-bold underline text-center mt-10">
-      Store Rating App
-    </h1>
-  );
+  return <RouterProvider router={router} />;
 };
+
 export default App;

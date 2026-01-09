@@ -15,11 +15,7 @@ const withValidationErrors = (validateValues) => {
 };
 
 const validateRegisterInput = withValidationErrors([
-  body("name")
-    .notEmpty()
-    .withMessage("Name is required")
-    .isLength({ min: 20, max: 60 })
-    .withMessage("Name must be between 20 and 60 characters"),
+  body("name").notEmpty().withMessage("Name is required"),
   body("email")
     .notEmpty()
     .withMessage("Email is required")
