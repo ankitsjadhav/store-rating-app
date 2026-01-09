@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
   const [stores, setStores] = useState([]);
+  const [filteredStores, setFilteredStores] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [ratingInput, setRatingInput] = useState({});
   const navigate = useNavigate();
@@ -16,6 +18,16 @@ const Home = () => {
     fetchStores();
   }, []);
 
+  useEffect(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    const filtered = stores.filter(
+      (store) =>
+        store.name.toLowerCase().includes(lowerQuery) ||
+        store.address.toLowerCase().includes(lowerQuery)
+    );
+    setFilteredStores(filtered);
+  }, [searchQuery, stores]);
+
   const fetchStores = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -25,6 +37,7 @@ const Home = () => {
 
       const { data } = await customFetch.get("/stores", config);
       setStores(data.stores);
+      setFilteredStores(data.stores);
     } catch (error) {
       console.error(error);
     }
@@ -57,18 +70,30 @@ const Home = () => {
     <div className="p-8 bg-gray-50 min-h-screen">
       <ToastContainer position="top-center" />
 
-      <div className="flex justify-between items-center mb-8 max-w-4xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 max-w-4xl mx-auto gap-4">
         <h1 className="text-3xl font-bold text-gray-800">Top Rated Stores</h1>
+        <div className="w-full md:w-1/3">
+          <input
+            type="text"
+            placeholder="Search by Name or Address..."
+            className="w-full p-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:border-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
         {!user ? (
           <button
             onClick={() => navigate("/login")}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 text-white px-4 py-2 rounded shrink-0"
           >
             Login to Rate
           </button>
         ) : (
-          <div className="flex gap-4 items-center">
-            <span className="font-semibold">Hello, {user.name}</span>
+          <div className="flex gap-4 items-center shrink-0">
+            <span className="font-semibold hidden md:block">
+              Hello, {user.name}
+            </span>
             {user.role === "ADMIN" && (
               <button
                 onClick={() => navigate("/admin")}
@@ -86,6 +111,12 @@ const Home = () => {
               </button>
             )}
             <button
+              onClick={() => navigate("/change-password")}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Change Password
+            </button>
+            <button
               onClick={() => {
                 localStorage.clear();
                 navigate("/login");
@@ -99,13 +130,13 @@ const Home = () => {
       </div>
 
       <div className="grid gap-6 max-w-4xl mx-auto">
-        {stores.map((store) => (
+        {filteredStores.map((store) => (
           <div
             key={store.id}
             className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition"
           >
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex flex-col md:flex-row justify-between items-start">
+              <div className="mb-4 md:mb-0">
                 <h2 className="text-2xl font-bold text-gray-800">
                   {store.name}
                 </h2>
@@ -120,7 +151,7 @@ const Home = () => {
               </div>
 
               {user && (
-                <div className="flex items-center space-x-2 bg-gray-50 p-2 rounded">
+                <div className="flex items-center space-x-2 bg-gray-50 p-2 rounded w-full md:w-auto justify-end">
                   <select
                     className="border p-1 rounded"
                     value={ratingInput[store.id] || ""}
@@ -150,8 +181,10 @@ const Home = () => {
           </div>
         ))}
 
-        {stores.length === 0 && (
-          <p className="text-center text-gray-500 mt-10">No stores found.</p>
+        {filteredStores.length === 0 && (
+          <p className="text-center text-gray-500 mt-10">
+            No stores found matching "{searchQuery}".
+          </p>
         )}
       </div>
     </div>

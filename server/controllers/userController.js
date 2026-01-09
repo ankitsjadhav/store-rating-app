@@ -59,4 +59,50 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, createUser, updateUserRole };
+const getSystemStats = async (req, res) => {
+  try {
+    const totalUsers = await prisma.user.count();
+    const totalStores = await prisma.store.count();
+    const totalRatings = await prisma.rating.count();
+
+    res.status(200).json({ stats: { totalUsers, totalStores, totalRatings } });
+  } catch (error) {
+    res.status(500).json({ msg: "server error" });
+  }
+};
+
+const updateUserPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ msg: "Please provide both values" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+    });
+    const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ msg: "Invalid old password" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { password: hashedNewPassword },
+    });
+
+    res.status(200).json({ msg: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+module.exports = {
+  getAllUsers,
+  createUser,
+  updateUserRole,
+  getSystemStats,
+  updateUserPassword,
+};
