@@ -19,6 +19,11 @@ connectDB();
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/stores", storeRouter);
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
