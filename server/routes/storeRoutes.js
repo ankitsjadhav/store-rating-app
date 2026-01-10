@@ -5,6 +5,7 @@ const {
   getAllStores,
   submitRating,
   getMyStores,
+  deleteStore,
 } = require("../controllers/storeController");
 const {
   authenticateUser,
@@ -35,6 +36,13 @@ router.post(
   authorizePermissions("ADMIN"),
   validateStoreInput,
   createStore
+);
+
+router.delete(
+  "/:id",
+  authenticateUser,
+  authorizePermissions("ADMIN"),
+  deleteStore
 );
 
 module.exports = router;

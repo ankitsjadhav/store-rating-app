@@ -1,20 +1,47 @@
 const { prisma } = require("../config/db");
+const bcrypt = require("bcryptjs");
 const { hashPassword } = require("../utils/passwordUtils");
 
 const getAllUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        address: true,
-        role: true,
-        _count: { select: { stores: true } },
+      include: {
+        stores: {
+          include: {
+            ratings: {
+              select: { value: true },
+            },
+          },
+        },
       },
       orderBy: { name: "asc" },
     });
-    res.status(200).json({ users });
+
+    const formattedUsers = users.map((user) => {
+      let storeRating = null;
+
+      if (user.role === "STORE_OWNER" && user.stores.length > 0) {
+        const allRatings = user.stores.flatMap((store) => store.ratings);
+
+        if (allRatings.length > 0) {
+          const totalScore = allRatings.reduce((sum, r) => sum + r.value, 0);
+          storeRating = totalScore / allRatings.length;
+        } else {
+          storeRating = 0;
+        }
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        role: user.role,
+        storeRating: storeRating,
+      };
+    });
+
+    res.status(200).json({ users: formattedUsers });
   } catch (error) {
     res.status(500).json({ msg: "server error" });
   }
@@ -59,6 +86,48 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userRatings = await prisma.rating.findMany({
+      where: { userId: id },
+      select: { storeId: true },
+    });
+
+    await prisma.store.updateMany({
+      where: { ownerId: id },
+      data: { ownerId: null },
+    });
+
+    await prisma.rating.deleteMany({
+      where: { userId: id },
+    });
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    for (const rating of userRatings) {
+      const aggregations = await prisma.rating.aggregate({
+        where: { storeId: rating.storeId },
+        _avg: { value: true },
+      });
+
+      const newAverage = aggregations._avg.value || 0;
+
+      await prisma.store.update({
+        where: { id: rating.storeId },
+        data: { averageRating: newAverage },
+      });
+    }
+
+    res.status(200).json({ msg: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: "server error" });
+  }
+};
+
 const getSystemStats = async (req, res) => {
   try {
     const totalUsers = await prisma.user.count();
@@ -81,6 +150,11 @@ const updateUserPassword = async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
     });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
     const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
 
     if (!isPasswordCorrect) {
@@ -103,6 +177,7 @@ module.exports = {
   getAllUsers,
   createUser,
   updateUserRole,
+  deleteUser,
   getSystemStats,
   updateUserPassword,
 };

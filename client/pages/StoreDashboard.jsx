@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
-import customFetch from "../utils/customFetch";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import customFetch from "../utils/customFetch";
+import OwnerNavbar from "../components/StoreDashboard/OwnerNavbar";
+import StoreCard from "../components/StoreDashboard/StoreCard";
+
 import "react-toastify/dist/ReactToastify.css";
 
 const StoreDashboard = () => {
   const [stores, setStores] = useState([]);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || (user.role !== "STORE_OWNER" && user.role !== "ADMIN")) {
+    if (!user || (user.role !== "STORE_OWNER" && user.role !== "ADMIN"))
       navigate("/login");
-    }
     fetchMyStores();
   }, [navigate]);
 
@@ -28,81 +31,61 @@ const StoreDashboard = () => {
     }
   };
 
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc")
+      direction = "desc";
+    setSortConfig({ key, direction });
+  };
+
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen font-sans text-gray-900">
       <ToastContainer position="top-center" />
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Store Dashboard</h1>
-        <button
-          onClick={() => navigate("/change-password")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Change Password
-        </button>
-        <button
-          onClick={() => {
-            localStorage.clear();
-            navigate("/login");
-          }}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
-      </div>
 
-      <div className="space-y-8">
-        {stores.map((store) => (
-          <div
-            key={store.id}
-            className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">{store.name}</h2>
-              <div className="text-right">
-                <span className="block text-sm text-gray-500">
-                  Average Rating
-                </span>
-                <span className="text-xl font-bold text-blue-600">
-                  {store.averageRating.toFixed(1)} ★
-                </span>
-              </div>
-            </div>
+      <OwnerNavbar navigate={navigate} />
 
-            <h3 className="font-semibold text-gray-700 mb-2 border-b pb-1">
-              Customer Ratings
-            </h3>
-            {store.ratings && store.ratings.length > 0 ? (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-gray-100 text-gray-600">
-                    <th className="p-2">Customer</th>
-                    <th className="p-2">Rating</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {store.ratings.map((rating, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">
-                        {rating.user?.name || "Anonymous"}
-                      </td>
-                      <td className="p-2 text-yellow-600 font-bold">
-                        {rating.value} ★
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-gray-400 italic">No ratings yet.</p>
-            )}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+              Dashboard Overview
+            </h1>
+            <p className="text-gray-500 mt-2 text-sm">
+              Monitor your store performance and customer feedback in real time.
+            </p>
           </div>
-        ))}
 
-        {stores.length === 0 && (
-          <p className="text-center text-gray-500">No stores found.</p>
-        )}
-      </div>
+          <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-sm text-gray-600 font-medium">
+            Total Stores:{" "}
+            <span className="text-gray-900 font-bold">{stores.length}</span>
+          </div>
+        </div>
+
+        {stores.map((store) => {
+          const sortedRatings = [...(store.ratings || [])].sort((a, b) => {
+            if (!sortConfig.key) return 0;
+
+            const valA = sortConfig.key === "user" ? a.user?.name : a.value;
+            const valB = sortConfig.key === "user" ? b.user?.name : b.value;
+
+            if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+            return 0;
+          });
+
+          return (
+            <StoreCard
+              key={store.id}
+              store={store}
+              sortedRatings={sortedRatings}
+              sortConfig={sortConfig}
+              handleSort={handleSort}
+            />
+          );
+        })}
+      </main>
     </div>
   );
 };
+
 export default StoreDashboard;

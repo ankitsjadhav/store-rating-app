@@ -1,36 +1,85 @@
-import { useEffect, useState } from "react";
-import customFetch from "../utils/customFetch";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import customFetch from "../utils/customFetch";
+import AdminUsersSection from "./AdminUsersSection";
+import Navbar from "../components/AdminDashboard/Navbar";
+import StatsCards from "../components/AdminDashboard/StatsCards";
+import StoreManagement from "../components/AdminDashboard/StoreManagement";
 import "react-toastify/dist/ReactToastify.css";
 
 const AdminDashboard = () => {
-  const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
+
+  const [stores, setStores] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalStores: 0,
     totalRatings: 0,
   });
-
-  const [filters, setFilters] = useState({
-    name: "",
-    email: "",
-    role: "",
-  });
-
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [showStoreForm, setShowStoreForm] = useState(false);
   const [storeData, setStoreData] = useState({
     name: "",
     email: "",
     address: "",
+    ownerEmail: "",
   });
-  const navigate = useNavigate();
+
+  const inputClass =
+    "w-full border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all";
+  const thClass =
+    "px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none";
+
+  const statCards = [
+    {
+      label: "Total Users",
+      value: stats.totalUsers,
+      icon: "👥",
+      colorClass: "bg-purple-50 text-purple-600",
+    },
+    {
+      label: "Total Stores",
+      value: stats.totalStores,
+      icon: "🏪",
+      colorClass: "bg-green-50 text-green-600",
+    },
+    {
+      label: "Total Ratings",
+      value: stats.totalRatings,
+      icon: "★",
+      colorClass: "bg-yellow-50 text-yellow-600",
+    },
+  ];
+
+  const tableColumns = [
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "address", label: "Address" },
+    { key: null, label: "Owner" },
+    { key: "averageRating", label: "Rating" },
+    { key: null, label: "Action" },
+  ];
+
+  const formFields = [
+    { name: "name", placeholder: "Store Name", type: "text" },
+    { name: "email", placeholder: "Store Email", type: "email" },
+    {
+      name: "address",
+      placeholder: "Address (Max 400)",
+      type: "text",
+      maxLength: 400,
+    },
+    {
+      name: "ownerEmail",
+      placeholder: "Assign Owner (User Email)",
+      type: "email",
+    },
+  ];
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || user.role !== "ADMIN") {
-      navigate("/login");
-    }
+    if (!user || user.role !== "ADMIN") navigate("/login");
     fetchData();
   }, [navigate]);
 
@@ -39,33 +88,21 @@ const AdminDashboard = () => {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      const [usersRes, statsRes] = await Promise.all([
-        customFetch.get("/users", config),
+      const [statsRes, storesRes] = await Promise.all([
         customFetch.get("/users/stats", config),
+        customFetch.get("/stores", config),
       ]);
 
-      setUsers(usersRes.data.users);
-      setStats(statsRes.data.stats);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch dashboard data");
-    }
-  };
-
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      const token = localStorage.getItem("token");
-      await customFetch.patch(
-        `/users/${userId}/role`,
-        { role: newRole },
-        {
-          headers: { Authorization: `Bearer ${token}` },
+      setStats(
+        statsRes.data.stats || {
+          totalUsers: 0,
+          totalStores: 0,
+          totalRatings: 0,
         }
       );
-      toast.success("Role updated");
-      fetchData();
+      setStores(storesRes.data.stores);
     } catch (error) {
-      toast.error("Failed to update role");
+      toast.error("Failed to fetch dashboard data");
     }
   };
 
@@ -76,204 +113,97 @@ const AdminDashboard = () => {
       await customFetch.post("/stores", storeData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       toast.success("Store created successfully");
       setShowStoreForm(false);
-      setStoreData({ name: "", email: "", address: "" });
+      setStoreData({ name: "", email: "", address: "", ownerEmail: "" });
       fetchData();
     } catch (error) {
       toast.error(error?.response?.data?.msg || "Failed to create store");
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchName = user.name
-      .toLowerCase()
-      .includes(filters.name.toLowerCase());
-    const matchEmail = user.email
-      .toLowerCase()
-      .includes(filters.email.toLowerCase());
-    const matchRole = filters.role ? user.role === filters.role : true;
-    return matchName && matchEmail && matchRole;
-  });
+  const handleDeleteStore = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this store?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      await customFetch.delete(`/stores/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Store deleted successfully");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to delete store");
+    }
+  };
+
+  const handleSort = (key) => {
+    if (!key) return;
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const sortedStores = useMemo(() => {
+    if (!sortConfig.key) return stores;
+
+    return [...stores].sort((a, b) => {
+      let valA = a[sortConfig.key];
+      let valB = b[sortConfig.key];
+
+      if (typeof valA === "string") valA = valA.toLowerCase();
+      if (typeof valB === "string") valB = valB.toLowerCase();
+
+      if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [stores, sortConfig]);
+
+  const renderSortArrow = (key) => {
+    if (sortConfig.key !== key)
+      return <span className="text-gray-300 ml-1">↕</span>;
+    return (
+      <span className="text-blue-600 ml-1">
+        {sortConfig.direction === "asc" ? "↑" : "↓"}
+      </span>
+    );
+  };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen font-sans text-gray-900">
       <ToastContainer position="top-center" />
 
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <div className="space-x-4">
-          <button
-            onClick={() => setShowStoreForm(!showStoreForm)}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            {showStoreForm ? "Close Form" : "+ Add Store"}
-          </button>
-          <button
-            onClick={() => navigate("/change-password")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Change Password
-          </button>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              navigate("/login");
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <Navbar navigate={navigate} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded shadow border-l-4 border-blue-500">
-          <h3 className="text-gray-500 text-sm font-bold uppercase">
-            Total Users
-          </h3>
-          <p className="text-3xl font-bold text-gray-800">{stats.totalUsers}</p>
-        </div>
-        <div className="bg-white p-6 rounded shadow border-l-4 border-green-500">
-          <h3 className="text-gray-500 text-sm font-bold uppercase">
-            Total Stores
-          </h3>
-          <p className="text-3xl font-bold text-gray-800">
-            {stats.totalStores}
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded shadow border-l-4 border-purple-500">
-          <h3 className="text-gray-500 text-sm font-bold uppercase">
-            Total Ratings
-          </h3>
-          <p className="text-3xl font-bold text-gray-800">
-            {stats.totalRatings}
-          </p>
-        </div>
-      </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          Dashboard Overview
+        </h1>
 
-      {showStoreForm && (
-        <form
-          onSubmit={handleCreateStore}
-          className="bg-white p-6 rounded shadow-md mb-8 max-w-lg mx-auto border-l-4 border-green-500"
-        >
-          <h3 className="font-bold text-xl mb-4">Create New Store</h3>
-          <input
-            className="w-full border p-2 mb-2 rounded"
-            placeholder="Store Name"
-            value={storeData.name}
-            onChange={(e) =>
-              setStoreData({ ...storeData, name: e.target.value })
-            }
-            required
-          />
-          <input
-            className="w-full border p-2 mb-2 rounded"
-            placeholder="Store Email"
-            type="email"
-            value={storeData.email}
-            onChange={(e) =>
-              setStoreData({ ...storeData, email: e.target.value })
-            }
-            required
-          />
-          <input
-            className="w-full border p-2 mb-4 rounded"
-            placeholder="Store Address"
-            value={storeData.address}
-            onChange={(e) =>
-              setStoreData({ ...storeData, address: e.target.value })
-            }
-            required
-          />
-          <button className="bg-green-600 text-white px-4 py-2 rounded w-full hover:bg-green-700">
-            Create Store
-          </button>
-        </form>
-      )}
+        <StatsCards statCards={statCards} />
 
-      <div className="bg-white p-4 rounded shadow mb-4 flex flex-col md:flex-row gap-4">
-        <input
-          type="text"
-          placeholder="Filter by Name"
-          className="border p-2 rounded flex-1"
-          value={filters.name}
-          onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+        <StoreManagement
+          showStoreForm={showStoreForm}
+          setShowStoreForm={setShowStoreForm}
+          formFields={formFields}
+          inputClass={inputClass}
+          storeData={storeData}
+          setStoreData={setStoreData}
+          handleCreateStore={handleCreateStore}
+          tableColumns={tableColumns}
+          thClass={thClass}
+          sortedStores={sortedStores}
+          handleSort={handleSort}
+          renderSortArrow={renderSortArrow}
+          handleDeleteStore={handleDeleteStore}
         />
-        <input
-          type="text"
-          placeholder="Filter by Email"
-          className="border p-2 rounded flex-1"
-          value={filters.email}
-          onChange={(e) => setFilters({ ...filters, email: e.target.value })}
-        />
-        <select
-          className="border p-2 rounded flex-1 bg-white"
-          value={filters.role}
-          onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-        >
-          <option value="">All Roles</option>
-          <option value="USER">User</option>
-          <option value="STORE_OWNER">Store Owner</option>
-          <option value="ADMIN">Admin</option>
-        </select>
-      </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="py-3 px-6 text-left">Name</th>
-              <th className="py-3 px-6 text-left">Email</th>
-              <th className="py-3 px-6 text-left">Current Role</th>
-              <th className="py-3 px-6 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-700">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-gray-50">
-                <td className="py-4 px-6">{user.name}</td>
-                <td className="py-4 px-6">{user.email}</td>
-                <td className="py-4 px-6">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${
-                      user.role === "ADMIN"
-                        ? "bg-purple-100 text-purple-700"
-                        : user.role === "STORE_OWNER"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  {user.role !== "ADMIN" && (
-                    <select
-                      className="border p-1 rounded bg-white cursor-pointer"
-                      onChange={(e) =>
-                        handleRoleChange(user.id, e.target.value)
-                      }
-                      value={user.role}
-                    >
-                      <option value="USER">User</option>
-                      <option value="STORE_OWNER">Store Owner</option>
-                    </select>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan="4" className="text-center py-4 text-gray-500">
-                  No users found matching filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+        <AdminUsersSection users={[]} refresh={fetchData} />
+      </main>
     </div>
   );
 };
+
 export default AdminDashboard;

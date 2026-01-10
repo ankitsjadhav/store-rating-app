@@ -6,6 +6,7 @@ const {
   updateUserRole,
   getSystemStats,
   updateUserPassword,
+  deleteUser,
 } = require("../controllers/userController");
 const {
   authenticateUser,
@@ -22,5 +23,6 @@ router.post("/", validateRegisterInput, createUser);
 router.patch("/update-password", updateUserPassword);
 router.get("/stats", getSystemStats);
 router.patch("/:id/role", updateUserRole);
+router.delete("/:id", deleteUser);
 
 module.exports = router;
