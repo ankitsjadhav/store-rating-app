@@ -9,17 +9,21 @@
 
 ## Application
 
-### 1. Admin Dashboard
+### 1. Landing Page
+
+<img src="./Images/LandingPage.png" width="600"/>
+
+### 2. Admin Dashboard
 
 <img src="./Images/DashBoard1.png" width="600" style="margin-bottom:20px"/>
 
 <img src="./Images/DashBoard2.png" width="600"/>
 
-### 2. Store Owner View
+### 3. Store Owner View
 
 <img src="./Images/Store%20Owner.png" width="600"/>
 
-### 3. User Store Search
+### 4. User Store Search
 
 <img src="./Images/User.png" width="600"/>
 
