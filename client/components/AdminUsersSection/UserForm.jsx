@@ -24,7 +24,7 @@ const UserForm = ({
             name={field.name}
             {...field}
             value={userData[field.name]}
-            onChange={handleInputChange(setUserData)}
+            onChange={(e) => handleInputChange(setUserData)(e)}
           />
         </div>
       ))}
@@ -35,7 +35,7 @@ const UserForm = ({
           className={inputClass}
           name="role"
           value={userData.role}
-          onChange={handleInputChange(setUserData)}
+          onChange={(e) => handleInputChange(setUserData)(e)}
         >
           <option value="USER">Normal User</option>
           <option value="STORE_OWNER">Store Owner</option>

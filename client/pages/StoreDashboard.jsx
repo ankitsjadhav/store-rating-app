@@ -11,12 +11,19 @@ const StoreDashboard = () => {
   const [stores, setStores] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || (user.role !== "STORE_OWNER" && user.role !== "ADMIN"))
+    const loggedUser = JSON.parse(localStorage.getItem("user"));
+    if (
+      !loggedUser ||
+      (loggedUser.role !== "STORE_OWNER" && loggedUser.role !== "ADMIN")
+    ) {
       navigate("/login");
-    fetchMyStores();
+    } else {
+      setUser(loggedUser);
+      fetchMyStores();
+    }
   }, [navigate]);
 
   const fetchMyStores = async () => {
@@ -42,7 +49,7 @@ const StoreDashboard = () => {
     <div className="bg-gray-50 min-h-screen font-sans text-gray-900">
       <ToastContainer position="top-center" />
 
-      <OwnerNavbar navigate={navigate} />
+      <OwnerNavbar user={user} navigate={navigate} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">

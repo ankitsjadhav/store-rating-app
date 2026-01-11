@@ -1,4 +1,9 @@
-const UserFilters = ({ inputClass, filters, handleInputChange }) => (
+const UserFilters = ({
+  inputClass,
+  filters,
+  handleInputChange,
+  setFilters,
+}) => (
   <div className="bg-white p-4 rounded-t-xl border border-gray-200 flex flex-col md:flex-row gap-4">
     {["name", "email"].map((f) => (
       <input
@@ -7,7 +12,7 @@ const UserFilters = ({ inputClass, filters, handleInputChange }) => (
         placeholder={`Filter by ${f}`}
         className={inputClass}
         value={filters[f]}
-        onChange={handleInputChange((v) => v)}
+        onChange={handleInputChange(setFilters)}
       />
     ))}
 
@@ -15,7 +20,7 @@ const UserFilters = ({ inputClass, filters, handleInputChange }) => (
       className={inputClass}
       name="role"
       value={filters.role}
-      onChange={handleInputChange((v) => v)}
+      onChange={handleInputChange(setFilters)}
     >
       <option value="">All Roles</option>
       <option value="USER">User</option>

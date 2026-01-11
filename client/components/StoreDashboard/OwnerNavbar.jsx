@@ -1,6 +1,6 @@
 import { KeyIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
 
-const OwnerNavbar = ({ navigate }) => (
+const OwnerNavbar = ({ user, navigate }) => (
   <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-opacity-90">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
       <div className="flex items-center gap-3">
@@ -22,7 +22,17 @@ const OwnerNavbar = ({ navigate }) => (
         </button>
 
         <div className="h-6 w-px bg-gray-200"></div>
-
+        {user && (
+          <div className="flex items-center gap-3 pr-3 border-r border-gray-200 mr-3">
+            <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+              {user.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-xs text-gray-500">Welcome back,</p>
+              <p className="text-sm font-semibold text-gray-800">{user.name}</p>
+            </div>
+          </div>
+        )}
         <button
           onClick={() => {
             localStorage.clear();

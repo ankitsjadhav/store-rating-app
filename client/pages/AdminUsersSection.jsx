@@ -226,6 +226,7 @@ const AdminUsersSection = ({ refresh }) => {
         inputClass={inputClass}
         filters={filters}
         handleInputChange={handleInputChange}
+        setFilters={setFilters}
       />
 
       <UsersTable
