@@ -55,7 +55,9 @@ const StoreDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Dashboard Overview
+              {user
+                ? `Welcome back, ${user.name.split(" ")[0]} 👋`
+                : "Dashboard Overview"}
             </h1>
             <p className="text-gray-500 mt-2 text-sm">
               Monitor your store performance and customer feedback in real time.
@@ -67,14 +69,6 @@ const StoreDashboard = () => {
             <span className="text-gray-900 font-bold">{stores.length}</span>
           </div>
         </div>
-
-        {user && (
-          <div className="mt-2 mb-2">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Welcome back, {user.name.split(" ")[0]} 👋
-            </h2>
-          </div>
-        )}
 
         {stores.map((store) => {
           const sortedRatings = [...(store.ratings || [])].sort((a, b) => {

@@ -46,13 +46,6 @@ const Navbar = ({ user, navigate }) => (
               <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
 
               <div className="flex items-center gap-3">
-                <div className="text-right hidden sm:block leading-tight">
-                  <p className="text-xs text-gray-500 font-medium">
-                    Welcome back,
-                  </p>
-                  <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                </div>
-
                 <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
