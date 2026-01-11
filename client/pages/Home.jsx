@@ -21,10 +21,19 @@ const Home = () => {
   useEffect(() => {
     const loggedUser = JSON.parse(localStorage.getItem("user"));
     setUser(loggedUser);
+
     if (loggedUser) {
+      if (loggedUser.role === "ADMIN") {
+        navigate("/admin");
+        return;
+      }
+      if (loggedUser.role === "STORE_OWNER") {
+        navigate("/store-owner");
+        return;
+      }
       fetchStores();
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!stores.length) return;
