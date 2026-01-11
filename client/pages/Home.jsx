@@ -189,6 +189,7 @@ const Home = () => {
                 setRatingInput={setRatingInput}
                 handleRate={handleRate}
                 searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
               />
             </div>
           </main>

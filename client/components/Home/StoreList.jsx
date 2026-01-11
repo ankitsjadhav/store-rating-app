@@ -7,6 +7,7 @@ const StoreList = ({
   setRatingInput,
   handleRate,
   searchQuery,
+  setSearchQuery,
 }) => (
   <div className="grid gap-6">
     {filteredStores.map((store) => (
