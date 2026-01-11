@@ -1,6 +1,6 @@
 import { KeyIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
 
-const OwnerNavbar = ({ user, navigate }) => (
+const OwnerNavbar = ({ navigate }) => (
   <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-opacity-90">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
       <div className="flex items-center gap-3">
@@ -12,7 +12,7 @@ const OwnerNavbar = ({ user, navigate }) => (
         </span>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/change-password")}
           className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50"
@@ -21,18 +21,6 @@ const OwnerNavbar = ({ user, navigate }) => (
           <span className="hidden sm:inline">Password</span>
         </button>
 
-        <div className="h-6 w-px bg-gray-200"></div>
-        {user && (
-          <div className="flex items-center gap-3 pr-3 border-r border-gray-200 mr-3">
-            <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-              {user.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs text-gray-500">Welcome back,</p>
-              <p className="text-sm font-semibold text-gray-800">{user.name}</p>
-            </div>
-          </div>
-        )}
         <button
           onClick={() => {
             localStorage.clear();

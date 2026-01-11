@@ -49,7 +49,7 @@ const StoreDashboard = () => {
     <div className="bg-gray-50 min-h-screen font-sans text-gray-900">
       <ToastContainer position="top-center" />
 
-      <OwnerNavbar user={user} navigate={navigate} />
+      <OwnerNavbar navigate={navigate} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
@@ -67,6 +67,14 @@ const StoreDashboard = () => {
             <span className="text-gray-900 font-bold">{stores.length}</span>
           </div>
         </div>
+
+        {user && (
+          <div className="mt-2 mb-2">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Welcome back, {user.name.split(" ")[0]} 👋
+            </h2>
+          </div>
+        )}
 
         {stores.map((store) => {
           const sortedRatings = [...(store.ratings || [])].sort((a, b) => {
