@@ -16,6 +16,10 @@ app.use(express.json());
 
 connectDB();
 
+app.get("/", (req, res) => {
+  res.send("<h1>Server is running successfully! </h1>");
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/stores", storeRouter);
